@@ -1,6 +1,7 @@
 package com.example.campusflow.ui.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -19,9 +20,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.campusflow.ui.dashboard.DashboardScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.campusflow.ui.tasks.TaskEntryScreen
 import com.example.campusflow.ui.tasks.TasksScreen
+import com.example.campusflow.ui.assignments.AssignmentEntryScreen
 import com.example.campusflow.ui.assignments.AssignmentsScreen
-import com.example.campusflow.ui.quiz.QuizScreen
+import com.example.campusflow.ui.attendance.AttendanceHistoryScreen
+import com.example.campusflow.ui.attendance.AttendanceScreen
+import com.example.campusflow.ui.attendance.MarkAttendanceScreen
+import com.example.campusflow.ui.attendance.SubjectEntryScreen
+import com.example.campusflow.ui.quiz.QuizHomeScreen
+import com.example.campusflow.ui.quiz.QuizSessionScreen
 import com.example.campusflow.ui.more.MoreScreen
 
 @Composable
@@ -42,18 +52,105 @@ fun CampusFlowNavGraph(
         ) {
             // Extension function composable() from navigation-compose defines a route
             composable(Screen.Home.route) { DashboardScreen() }
-            composable(Screen.Tasks.route) { TasksScreen() }
-            composable(Screen.Assignments.route) { AssignmentsScreen() }
-            composable(Screen.Quiz.route) { QuizScreen() }
+            composable(Screen.Tasks.route) { 
+                TasksScreen(
+                    onNavigateToTaskEntry = { taskId ->
+                        navController.navigate(Screen.TaskEntry.createRoute(taskId))
+                    }
+                ) 
+            }
+            composable(Screen.Assignments.route) { 
+                AssignmentsScreen(
+                    onNavigateToAssignmentEntry = { assignmentId ->
+                        navController.navigate(Screen.AssignmentEntry.createRoute(assignmentId))
+                    }
+                ) 
+            }
+            composable(Screen.Quiz.route) { 
+                QuizHomeScreen(
+                    onNavigateToSession = { category -> navController.navigate(Screen.QuizSession.createRoute(category)) }
+                ) 
+            }
             composable(Screen.More.route) { MoreScreen(navController) }
             
+            // Sub-screen for Task Entry (Add/Edit)
+            composable(
+                route = Screen.TaskEntry.route,
+                arguments = listOf(navArgument("taskId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val taskId = backStackEntry.arguments?.getInt("taskId") ?: -1
+                TaskEntryScreen(
+                    taskId = if (taskId == -1) null else taskId,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            // Sub-screen for Assignment Entry (Add/Edit)
+            composable(
+                route = Screen.AssignmentEntry.route,
+                arguments = listOf(navArgument("assignmentId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val assignmentId = backStackEntry.arguments?.getInt("assignmentId") ?: -1
+                AssignmentEntryScreen(
+                    assignmentId = if (assignmentId == -1) null else assignmentId,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+            
             // Sub-screens for 'More' tab
-            composable(Screen.Attendance.route) { PlaceholderScreen(Screen.Attendance.title) }
+            composable(Screen.Attendance.route) { 
+                AttendanceScreen(
+                    onNavigateToSubjectEntry = { subjectId -> navController.navigate(Screen.SubjectEntry.createRoute(subjectId)) },
+                    onNavigateToMarkAttendance = { navController.navigate(Screen.MarkAttendance.createRoute(null)) },
+                    onNavigateToHistory = { navController.navigate(Screen.AttendanceHistory.route) }
+                ) 
+            }
             composable(Screen.Notes.route) { PlaceholderScreen(Screen.Notes.title) }
             composable(Screen.Planner.route) { PlaceholderScreen(Screen.Planner.title) }
             composable(Screen.Statistics.route) { PlaceholderScreen(Screen.Statistics.title) }
             composable(Screen.Profile.route) { PlaceholderScreen(Screen.Profile.title) }
             composable(Screen.Settings.route) { PlaceholderScreen(Screen.Settings.title) }
+            
+            // Dynamic Routes for Attendance Module
+            composable(
+                route = Screen.SubjectEntry.route,
+                arguments = listOf(navArgument("subjectId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val subjectId = backStackEntry.arguments?.getInt("subjectId") ?: -1
+                SubjectEntryScreen(
+                    subjectId = if (subjectId == -1) null else subjectId,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(
+                route = Screen.MarkAttendance.route,
+                arguments = listOf(navArgument("recordId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val recordId = backStackEntry.arguments?.getInt("recordId") ?: -1
+                MarkAttendanceScreen(
+                    recordId = if (recordId == -1) null else recordId,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.AttendanceHistory.route) {
+                AttendanceHistoryScreen(
+                    onNavigateToEditRecord = { recordId -> navController.navigate(Screen.MarkAttendance.createRoute(recordId)) },
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(
+                route = Screen.QuizSession.route,
+                arguments = listOf(navArgument("category") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category") ?: ""
+                QuizSessionScreen(
+                    category = category,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
