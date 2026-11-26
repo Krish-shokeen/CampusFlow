@@ -111,7 +111,9 @@ fun TasksScreen(
                 items(Priority.values()) { priority ->
                     FilterChip(
                         selected = priorityFilter == priority,
-                        onClick = { viewModel.priorityFilter.value = priority },
+                        onClick = {
+                            viewModel.priorityFilter.value = if (priorityFilter == priority) null else priority
+                        },
                         label = { Text(priority.name) }
                     )
                 }

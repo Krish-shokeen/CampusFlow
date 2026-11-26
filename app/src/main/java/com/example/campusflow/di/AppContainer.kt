@@ -9,6 +9,7 @@ import com.example.campusflow.data.repository.QuizRepository
 import com.example.campusflow.data.repository.StudyPlannerRepository
 import com.example.campusflow.data.repository.SubjectRepository
 import com.example.campusflow.data.repository.TaskRepository
+import com.example.campusflow.data.repository.UserPreferencesRepository
 
 /**
  * Dependency Injection container at the application level.
@@ -21,6 +22,7 @@ interface AppContainer {
     val noteRepository: NoteRepository
     val quizRepository: QuizRepository
     val studyPlannerRepository: StudyPlannerRepository
+    val userPreferencesRepository: UserPreferencesRepository
 }
 
 /**
@@ -60,5 +62,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     
     override val studyPlannerRepository: StudyPlannerRepository by lazy {
         StudyPlannerRepository(database.studyPlannerDao())
+    }
+
+    override val userPreferencesRepository: UserPreferencesRepository by lazy {
+        UserPreferencesRepository(context)
     }
 }

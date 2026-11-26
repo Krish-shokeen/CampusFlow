@@ -2,7 +2,7 @@ package com.example.campusflow.ui.tasks
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +34,7 @@ fun TaskEntryScreen(
     var priority by remember { mutableStateOf(Priority.MEDIUM) }
     var status by remember { mutableStateOf(TaskStatus.PENDING) }
     var dueDate by remember { mutableStateOf<LocalDateTime?>(null) }
+    var existingTask by remember { mutableStateOf<Task?>(null) }
     
     // Error state for validation
     var isTitleError by remember { mutableStateOf(false) }
@@ -51,13 +52,13 @@ fun TaskEntryScreen(
     // Load existing task if editing
     LaunchedEffect(taskId) {
         if (taskId != null) {
-            viewModel.getTask(taskId)?.let { existingTask ->
-                title = existingTask.title
-                description = existingTask.description
-                priority = existingTask.priority
-                status = existingTask.status
-                dueDate = existingTask.dueDate
-            }
+            val task = viewModel.getTask(taskId) ?: return@LaunchedEffect
+            existingTask = task
+            title = task.title
+            description = task.description
+            priority = task.priority
+            status = task.status
+            dueDate = task.dueDate
         }
     }
 
@@ -67,7 +68,7 @@ fun TaskEntryScreen(
                 title = { Text(if (taskId == null) "New Task" else "Edit Task") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -196,14 +197,13 @@ fun TaskEntryScreen(
                         priority = priority,
                         status = status,
                         dueDate = dueDate,
-                        // Preserve original createdAt if editing, else use default (now)
+                        createdAt = existingTask?.createdAt ?: LocalDateTime.now()
                     )
                     coroutineScope.launch {
                         if (taskId == null) {
                             viewModel.addTask(task)
                         } else {
-                            // We need to keep original createdAt, but for simplicity we let room update it
-                            viewModel.updateTask(task) 
+                            viewModel.updateTask(task)
                         }
                         navigateBack()
                     }

@@ -31,6 +31,21 @@ object AppViewModelProvider {
         initializer {
             QuizViewModel(campusFlowApplication().container.quizRepository)
         }
+        initializer {
+            ProfileSettingsViewModel(campusFlowApplication().container.userPreferencesRepository)
+        }
+        initializer {
+            NotesViewModel(
+                campusFlowApplication().container.noteRepository,
+                campusFlowApplication().container.subjectRepository
+            )
+        }
+        initializer {
+            StudyPlannerViewModel(
+                campusFlowApplication().container.studyPlannerRepository,
+                campusFlowApplication().container.subjectRepository
+            )
+        }
     }
 }
 

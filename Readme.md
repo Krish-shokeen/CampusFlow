@@ -16,9 +16,9 @@ The application brings together essential student tools such as task management,
 ## ✨ Key Features
 
 ### 1. Dashboard
-- Centralized overview of academic activities.
-- Quick access to application modules.
-- Academic statistics and progress indicators.
+- Personalized greeting and current date.
+- Live pending task and assignment totals, next assignment deadline, and attendance progress.
+- Quick actions for tasks, assignments, attendance, and the study planner.
 
 ### 2. Task Manager
 - Create, update, and delete tasks.
@@ -43,12 +43,19 @@ The application brings together essential student tools such as task management,
 - Calculate scores.
 - Track quiz performance.
 
-### 6. Additional Modules
-Planned enhancements:
-- Notes Manager
-- Smart Study Planner
-- Detailed Academic Statistics
-- Profile and Settings
+### 6. Notes Manager
+- Create, edit, search, and delete notes stored locally.
+
+### 7. Study Planner
+- Schedule subject-wise study sessions with a date, start time, and duration.
+- Edit and remove scheduled sessions.
+
+### 8. Statistics
+- Review task completion, assignments due, attendance, quiz scores, and study time this week.
+
+### 9. Profile and Settings
+- Save a name, course, and semester on the device.
+- Choose light, dark, or system appearance; the preference is retained after restart.
 
 ## 🛠️ Technology Stack
 
@@ -78,7 +85,6 @@ CampusFlow
 │   ├── dao
 │   ├── entities
 │   ├── repository
-│   └── preferences
 │
 ├── domain
 │   ├── model
@@ -99,7 +105,8 @@ CampusFlow
 │   ├── notes
 │   ├── planner
 │   ├── statistics
-│   └── profile
+│   ├── profile
+│   └── settings
 │
 ├── utils
 │
@@ -150,12 +157,9 @@ Add screenshots of your implemented application in the `screenshots` folder.
 
 ## 🚀 Future Enhancements
 
-- Notes management with categorization.
-- Smart study planner and scheduling.
-- Cloud synchronization and backup.
 - Notifications for upcoming deadlines.
-- Detailed performance analytics.
-- Improved personalization and accessibility.
+- Optional data export and backup.
+- Expanded academic analytics and accessibility improvements.
 
 ## 🎓 Academic Information
 

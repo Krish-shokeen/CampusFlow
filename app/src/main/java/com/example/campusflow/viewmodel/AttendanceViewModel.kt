@@ -67,7 +67,7 @@ class AttendanceViewModel(
             val present = subjectRecords.count { it.isPresent }
             val absent = subjectRecords.count { !it.isPresent }
             val total = present + absent
-            val percentage = if (total == 0) 100f else (present.toFloat() / total) * 100f
+            val percentage = if (total == 0) 0f else (present.toFloat() / total) * 100f
             
             totalPresent += present
             totalAbsent += absent
@@ -101,7 +101,7 @@ class AttendanceViewModel(
         }.sortedBy { it.percentage } // Sort by lowest attendance first
 
         val overallTotal = totalPresent + totalAbsent
-        val overallPercentage = if (overallTotal == 0) 100f else (totalPresent.toFloat() / overallTotal) * 100f
+        val overallPercentage = if (overallTotal == 0) 0f else (totalPresent.toFloat() / overallTotal) * 100f
         val overallStats = OverallAttendanceStats(
             present = totalPresent,
             absent = totalAbsent,

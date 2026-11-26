@@ -1,7 +1,5 @@
 package com.example.campusflow.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -10,7 +8,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,6 +30,11 @@ import com.example.campusflow.ui.attendance.SubjectEntryScreen
 import com.example.campusflow.ui.quiz.QuizHomeScreen
 import com.example.campusflow.ui.quiz.QuizSessionScreen
 import com.example.campusflow.ui.more.MoreScreen
+import com.example.campusflow.ui.notes.NotesScreen
+import com.example.campusflow.ui.planner.StudyPlannerScreen
+import com.example.campusflow.ui.profile.ProfileScreen
+import com.example.campusflow.ui.settings.SettingsScreen
+import com.example.campusflow.ui.statistics.StatisticsScreen
 
 @Composable
 fun CampusFlowNavGraph(
@@ -51,7 +53,14 @@ fun CampusFlowNavGraph(
             modifier = modifier.padding(innerPadding)
         ) {
             // Extension function composable() from navigation-compose defines a route
-            composable(Screen.Home.route) { DashboardScreen() }
+            composable(Screen.Home.route) {
+                DashboardScreen(
+                    onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
+                    onNavigateToAssignments = { navController.navigate(Screen.Assignments.route) },
+                    onNavigateToAttendance = { navController.navigate(Screen.Attendance.route) },
+                    onNavigateToPlanner = { navController.navigate(Screen.Planner.route) }
+                )
+            }
             composable(Screen.Tasks.route) { 
                 TasksScreen(
                     onNavigateToTaskEntry = { taskId ->
@@ -105,11 +114,11 @@ fun CampusFlowNavGraph(
                     onNavigateToHistory = { navController.navigate(Screen.AttendanceHistory.route) }
                 ) 
             }
-            composable(Screen.Notes.route) { PlaceholderScreen(Screen.Notes.title) }
-            composable(Screen.Planner.route) { PlaceholderScreen(Screen.Planner.title) }
-            composable(Screen.Statistics.route) { PlaceholderScreen(Screen.Statistics.title) }
-            composable(Screen.Profile.route) { PlaceholderScreen(Screen.Profile.title) }
-            composable(Screen.Settings.route) { PlaceholderScreen(Screen.Settings.title) }
+            composable(Screen.Notes.route) { NotesScreen() }
+            composable(Screen.Planner.route) { StudyPlannerScreen() }
+            composable(Screen.Statistics.route) { StatisticsScreen() }
+            composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.Settings.route) { SettingsScreen() }
             
             // Dynamic Routes for Attendance Module
             composable(
@@ -186,16 +195,5 @@ fun BottomNavigationBar(navController: NavHostController) {
                 }
             )
         }
-    }
-}
-
-// A simple temporary screen using Kotlin's default parameters
-@Composable
-fun PlaceholderScreen(title: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "$title Screen - Coming Soon")
     }
 }
