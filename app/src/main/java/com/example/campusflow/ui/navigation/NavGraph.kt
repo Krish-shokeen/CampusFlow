@@ -25,10 +25,18 @@ import com.example.campusflow.ui.assignments.AssignmentEntryScreen
 import com.example.campusflow.ui.assignments.AssignmentsScreen
 import com.example.campusflow.ui.attendance.AttendanceHistoryScreen
 import com.example.campusflow.ui.attendance.AttendanceScreen
-import com.example.campusflow.ui.attendance.MarkAttendanceScreen
-import com.example.campusflow.ui.attendance.SubjectEntryScreen
+import com.example.campusflow.ui.notes.NoteEntryScreen
+import com.example.campusflow.ui.notes.NotesScreen
+import com.example.campusflow.ui.planner.PlannerScreen
+import com.example.campusflow.ui.planner.SessionEntryScreen
+import com.example.campusflow.ui.profile.ProfileScreen
+import com.example.campusflow.ui.profile.SettingsScreen
+import com.example.campusflow.ui.statistics.StatisticsScreen
 import com.example.campusflow.ui.quiz.QuizHomeScreen
 import com.example.campusflow.ui.quiz.QuizSessionScreen
+import com.example.campusflow.ui.attendance.MarkAttendanceScreen
+import com.example.campusflow.ui.attendance.SubjectEntryScreen
+import com.example.campusflow.ui.dashboard.DashboardScreen
 import com.example.campusflow.ui.more.MoreScreen
 import com.example.campusflow.ui.notes.NotesScreen
 import com.example.campusflow.ui.planner.StudyPlannerScreen
@@ -53,13 +61,23 @@ fun CampusFlowNavGraph(
             modifier = modifier.padding(innerPadding)
         ) {
             // Extension function composable() from navigation-compose defines a route
+<<<<<<< Updated upstream
             composable(Screen.Home.route) {
+=======
+            composable(Screen.Home.route) { 
+>>>>>>> Stashed changes
                 DashboardScreen(
                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                     onNavigateToAssignments = { navController.navigate(Screen.Assignments.route) },
                     onNavigateToAttendance = { navController.navigate(Screen.Attendance.route) },
+<<<<<<< Updated upstream
                     onNavigateToPlanner = { navController.navigate(Screen.Planner.route) }
                 )
+=======
+                    onNavigateToQuizzes = { navController.navigate(Screen.Quiz.route) },
+                    onNavigateToPlanner = { navController.navigate(Screen.Planner.route) }
+                ) 
+>>>>>>> Stashed changes
             }
             composable(Screen.Tasks.route) { 
                 TasksScreen(
@@ -114,11 +132,35 @@ fun CampusFlowNavGraph(
                     onNavigateToHistory = { navController.navigate(Screen.AttendanceHistory.route) }
                 ) 
             }
+<<<<<<< Updated upstream
             composable(Screen.Notes.route) { NotesScreen() }
             composable(Screen.Planner.route) { StudyPlannerScreen() }
             composable(Screen.Statistics.route) { StatisticsScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
+=======
+            composable(Screen.Notes.route) { 
+                NotesScreen(
+                    onNavigateToNoteEntry = { noteId -> navController.navigate(Screen.NoteEntry.createRoute(noteId)) }
+                )
+            }
+            composable(Screen.Planner.route) { 
+                PlannerScreen(
+                    onNavigateToSessionEntry = { sessionId -> navController.navigate(Screen.SessionEntry.createRoute(sessionId)) }
+                )
+            }
+            composable(Screen.Statistics.route) { StatisticsScreen() }
+            composable(Screen.Profile.route) { 
+                ProfileScreen(
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                )
+            }
+            composable(Screen.Settings.route) { 
+                SettingsScreen(
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+>>>>>>> Stashed changes
             
             // Dynamic Routes for Attendance Module
             composable(
@@ -157,6 +199,28 @@ fun CampusFlowNavGraph(
                 val category = backStackEntry.arguments?.getString("category") ?: ""
                 QuizSessionScreen(
                     category = category,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+            
+            composable(
+                route = Screen.NoteEntry.route,
+                arguments = listOf(navArgument("noteId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getInt("noteId") ?: -1
+                NoteEntryScreen(
+                    noteId = if (noteId == -1) null else noteId,
+                    navigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                route = Screen.SessionEntry.route,
+                arguments = listOf(navArgument("sessionId") { type = NavType.IntType; defaultValue = -1 })
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getInt("sessionId") ?: -1
+                SessionEntryScreen(
+                    sessionId = if (sessionId == -1) null else sessionId,
                     navigateBack = { navController.popBackStack() }
                 )
             }

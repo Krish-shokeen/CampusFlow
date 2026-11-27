@@ -1,5 +1,6 @@
 package com.example.campusflow.ui.profile
 
+<<<<<<< Updated upstream
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,3 +61,95 @@ fun ProfileScreen(
         ) { Text(if (saved) "Saved" else "Save profile") }
     }
 }
+=======
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.campusflow.data.preferences.UserProfile
+import com.example.campusflow.viewmodel.AppViewModelProvider
+import com.example.campusflow.viewmodel.ProfileViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileScreen(
+    onNavigateToSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val profile by viewModel.userProfile.collectAsState()
+    
+    var isEditing by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf(profile.name) }
+    var university by remember { mutableStateOf(profile.university) }
+    var course by remember { mutableStateOf(profile.course) }
+    var semester by remember { mutableStateOf(profile.semester) }
+    
+    LaunchedEffect(profile) {
+        if (!isEditing) {
+            name = profile.name
+            university = profile.university
+            course = profile.course
+            semester = profile.semester
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Profile") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(100.dp), tint = MaterialTheme.colorScheme.primary)
+            
+            if (isEditing) {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = university, onValueChange = { university = it }, label = { Text("University") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = course, onValueChange = { course = it }, label = { Text("Course") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = semester, onValueChange = { semester = it }, label = { Text("Semester") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedButton(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) { Text("Cancel") }
+                    Button(
+                        onClick = {
+                            viewModel.updateProfile(UserProfile(name, university, course, semester, profile.isDarkMode))
+                            isEditing = false
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Save") }
+                }
+            } else {
+                Text(text = profile.name, style = MaterialTheme.typography.headlineMedium)
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("University: ${profile.university}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Course: ${profile.course}", style = MaterialTheme.typography.bodyLarge)
+                        Text("Semester: ${profile.semester}", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Button(onClick = { isEditing = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Edit Profile")
+                }
+            }
+        }
+    }
+}
+>>>>>>> Stashed changes

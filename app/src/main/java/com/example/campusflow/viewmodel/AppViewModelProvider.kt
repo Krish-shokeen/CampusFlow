@@ -31,6 +31,7 @@ object AppViewModelProvider {
         initializer {
             QuizViewModel(campusFlowApplication().container.quizRepository)
         }
+<<<<<<< Updated upstream
         initializer {
             ProfileSettingsViewModel(campusFlowApplication().container.userPreferencesRepository)
         }
@@ -45,6 +46,20 @@ object AppViewModelProvider {
                 campusFlowApplication().container.studyPlannerRepository,
                 campusFlowApplication().container.subjectRepository
             )
+=======
+        initializer { NoteViewModel(campusFlowApplication().container.noteRepository) }
+        initializer { StudyPlannerViewModel(campusFlowApplication().container.studyPlannerRepository, campusFlowApplication().container.subjectRepository) }
+        initializer { ProfileViewModel(campusFlowApplication().container.userPreferencesRepository) }
+        initializer { 
+            val container = campusFlowApplication().container
+            StatisticsViewModel(
+                container.taskRepository, 
+                container.assignmentRepository, 
+                container.studyPlannerRepository, 
+                container.quizRepository,
+                container.attendanceRepository
+            ) 
+>>>>>>> Stashed changes
         }
     }
 }

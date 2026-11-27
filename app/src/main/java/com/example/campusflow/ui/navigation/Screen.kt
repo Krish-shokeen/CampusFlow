@@ -18,6 +18,14 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Quiz : Screen("quiz", "Quiz", Icons.Filled.Quiz)
     object More : Screen("more", "More", Icons.Filled.Menu)
     
+    // Additional screens accessed from 'More'
+    object Attendance : Screen("attendance", "Attendance", Icons.Filled.Menu)
+    object Notes : Screen("notes", "Notes", Icons.Filled.Menu)
+    object Planner : Screen("planner", "Planner", Icons.Filled.Menu)
+    object Statistics : Screen("statistics", "Statistics", Icons.Filled.Menu)
+    object Profile : Screen("profile", "Profile", Icons.Filled.Menu)
+    object Settings : Screen("settings", "Settings", Icons.Filled.Menu)
+
     // Dynamic route for Task Add/Edit
     object TaskEntry : Screen("task_entry?taskId={taskId}", "Task Entry", Icons.Filled.Menu) {
         fun createRoute(taskId: Int? = null) = if (taskId != null) "task_entry?taskId=$taskId" else "task_entry?taskId=-1"
@@ -44,13 +52,15 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
         fun createRoute(category: String) = "quiz_session/$category"
     }
     
-    // Additional screens accessed from 'More'
-    object Attendance : Screen("attendance", "Attendance", Icons.Filled.Menu)
-    object Notes : Screen("notes", "Notes", Icons.Filled.Menu)
-    object Planner : Screen("planner", "Planner", Icons.Filled.Menu)
-    object Statistics : Screen("statistics", "Statistics", Icons.Filled.Menu)
-    object Profile : Screen("profile", "Profile", Icons.Filled.Menu)
-    object Settings : Screen("settings", "Settings", Icons.Filled.Menu)
+    // Notes module routes
+    object NoteEntry : Screen("note_entry?noteId={noteId}", "Note Entry", Icons.Filled.Menu) {
+        fun createRoute(noteId: Int? = null) = if (noteId != null) "note_entry?noteId=$noteId" else "note_entry?noteId=-1"
+    }
+
+    // Study Planner module routes
+    object SessionEntry : Screen("session_entry?sessionId={sessionId}", "Session Entry", Icons.Filled.Menu) {
+        fun createRoute(sessionId: Int? = null) = if (sessionId != null) "session_entry?sessionId=$sessionId" else "session_entry?sessionId=-1"
+    }
 
     companion object {
         // A list of main screens for the Bottom Navigation Bar

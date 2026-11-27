@@ -1,5 +1,6 @@
 package com.example.campusflow.ui.dashboard
 
+<<<<<<< Updated upstream
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,19 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+=======
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.*
+>>>>>>> Stashed changes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,30 +51,55 @@ import com.example.campusflow.utils.DateUtils
 import com.example.campusflow.viewmodel.AppViewModelProvider
 import com.example.campusflow.viewmodel.AssignmentViewModel
 import com.example.campusflow.viewmodel.AttendanceViewModel
+<<<<<<< Updated upstream
 import com.example.campusflow.viewmodel.ProfileSettingsViewModel
+=======
+import com.example.campusflow.viewmodel.ProfileViewModel
+>>>>>>> Stashed changes
 import com.example.campusflow.viewmodel.QuizViewModel
+import com.example.campusflow.viewmodel.StudyPlannerViewModel
 import com.example.campusflow.viewmodel.TaskViewModel
 import java.time.LocalDate
+<<<<<<< Updated upstream
 import java.time.format.DateTimeFormatter
+=======
+import java.time.LocalTime
+>>>>>>> Stashed changes
 import java.util.Locale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.clickable
 
 @Composable
 fun DashboardScreen(
+<<<<<<< Updated upstream
     onNavigateToTasks: () -> Unit,
     onNavigateToAssignments: () -> Unit,
     onNavigateToAttendance: () -> Unit,
     onNavigateToPlanner: () -> Unit,
+=======
+    onNavigateToTasks: () -> Unit = {},
+    onNavigateToAssignments: () -> Unit = {},
+    onNavigateToAttendance: () -> Unit = {},
+    onNavigateToQuizzes: () -> Unit = {},
+    onNavigateToPlanner: () -> Unit = {},
+>>>>>>> Stashed changes
     modifier: Modifier = Modifier,
     taskViewModel: TaskViewModel = viewModel(factory = AppViewModelProvider.Factory),
     assignmentViewModel: AssignmentViewModel = viewModel(factory = AppViewModelProvider.Factory),
     attendanceViewModel: AttendanceViewModel = viewModel(factory = AppViewModelProvider.Factory),
     quizViewModel: QuizViewModel = viewModel(factory = AppViewModelProvider.Factory),
+<<<<<<< Updated upstream
     profileViewModel: ProfileSettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+=======
+    plannerViewModel: StudyPlannerViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    profileViewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider.Factory)
+>>>>>>> Stashed changes
 ) {
     val tasksState by taskViewModel.uiState.collectAsState()
     val assignmentsState by assignmentViewModel.uiState.collectAsState()
     val attendanceState by attendanceViewModel.uiState.collectAsState()
     val quizState by quizViewModel.homeUiState.collectAsState()
+<<<<<<< Updated upstream
     val profile by profileViewModel.uiState.collectAsState()
 
     val pendingTasks = tasksState.tasks.count { it.status != TaskStatus.COMPLETED }
@@ -111,6 +150,44 @@ fun DashboardScreen(
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+=======
+    val plannerState by plannerViewModel.uiState.collectAsState()
+    val profile by profileViewModel.userProfile.collectAsState()
+
+    val currentHour = LocalTime.now().hour
+    val greeting = when {
+        currentHour < 12 -> "Good Morning"
+        currentHour < 17 -> "Good Afternoon"
+        else -> "Good Evening"
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(bottom = 8.dp)) {
+            Text(
+                text = "$greeting, ${profile.name}",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "${profile.course} | ${profile.semester}",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Task Summary Card
+        val pendingTasks = tasksState.tasks.count { it.status != TaskStatus.COMPLETED }
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+>>>>>>> Stashed changes
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -184,10 +261,19 @@ fun DashboardScreen(
                 }
             }
         }
+<<<<<<< Updated upstream
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+=======
+        
+        // Quiz Summary Card
+        Card(modifier = Modifier.fillMaxWidth().clickable { onNavigateToQuizzes() }) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+>>>>>>> Stashed changes
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Quiz progress", style = MaterialTheme.typography.titleMedium)
@@ -195,6 +281,33 @@ fun DashboardScreen(
                 }
             }
         }
+        
+        // Study Planner Summary Card
+        val todaySessions = plannerState.sessions.filter { it.session.date == LocalDate.now() }
+        Card(modifier = Modifier.fillMaxWidth().clickable { onNavigateToPlanner() }) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color(0xFF16A34A))
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text("Study Planner", style = MaterialTheme.typography.titleLarge)
+                    Text("${todaySessions.size} sessions planned today", style = MaterialTheme.typography.bodyMedium)
+                    if (todaySessions.isNotEmpty()) {
+                        val nextSession = todaySessions.first()
+                        Text(
+                            "Next up: ${nextSession.subject?.subjectName ?: "General Study"}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 

@@ -6,6 +6,7 @@ import com.example.campusflow.data.entities.StudySession
 import com.example.campusflow.data.entities.Subject
 import com.example.campusflow.data.repository.StudyPlannerRepository
 import com.example.campusflow.data.repository.SubjectRepository
+<<<<<<< Updated upstream
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -51,3 +52,36 @@ class StudyPlannerViewModel(
         viewModelScope.launch { studyPlannerRepository.deleteSession(session) }
     }
 }
+=======
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+data class SessionDetails(val session: StudySession, val subject: Subject?)
+
+data class PlannerUiState(
+    val sessions: List<SessionDetails> = emptyList(),
+    val subjects: List<Subject> = emptyList(),
+    val isLoading: Boolean = false
+)
+
+class StudyPlannerViewModel(
+    private val plannerRepository: StudyPlannerRepository,
+    private val subjectRepository: SubjectRepository
+) : ViewModel() {
+    
+    val uiState: StateFlow<PlannerUiState> = combine(
+        plannerRepository.getAllSessionsStream(),
+        subjectRepository.getAllSubjectsStream()
+    ) { sessions, subjects ->
+        val details = sessions.map { session ->
+            SessionDetails(session, subjects.find { it.id == session.subjectId })
+        }.sortedWith(compareBy({ it.session.date }, { it.session.startTime }))
+        PlannerUiState(sessions = details, subjects = subjects, isLoading = false)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PlannerUiState(isLoading = true))
+
+    fun addSession(session: StudySession) = viewModelScope.launch { plannerRepository.insertSession(session) }
+    fun updateSession(session: StudySession) = viewModelScope.launch { plannerRepository.updateSession(session) }
+    fun deleteSession(session: StudySession) = viewModelScope.launch { plannerRepository.deleteSession(session) }
+    suspend fun getSession(id: Int): StudySession? = plannerRepository.getSessionStream(id)
+}
+>>>>>>> Stashed changes

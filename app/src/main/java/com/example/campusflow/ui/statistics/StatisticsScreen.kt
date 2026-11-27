@@ -1,5 +1,6 @@
 package com.example.campusflow.ui.statistics
 
+<<<<<<< Updated upstream
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -94,3 +95,66 @@ private fun MetricCard(title: String, value: String, modifier: Modifier = Modifi
         }
     }
 }
+=======
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.campusflow.ui.components.ProgressRing
+import com.example.campusflow.ui.components.StatCard
+import com.example.campusflow.viewmodel.AppViewModelProvider
+import com.example.campusflow.viewmodel.StatisticsViewModel
+import java.util.Locale
+
+@Composable
+fun StatisticsScreen(
+    modifier: Modifier = Modifier,
+    viewModel: StatisticsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val stats by viewModel.uiState.collectAsState()
+
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text("Statistics & Analytics", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+        
+        // Progress Row
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val taskPercent = if (stats.totalTasks > 0) stats.completedTasks.toFloat() / stats.totalTasks else 0f
+                ProgressRing(progress = taskPercent, size = 100.dp, progressColor = MaterialTheme.colorScheme.primary)
+                Text("Task Completion", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val assignPercent = if (stats.totalAssignments > 0) stats.completedAssignments.toFloat() / stats.totalAssignments else 0f
+                ProgressRing(progress = assignPercent, size = 100.dp, progressColor = MaterialTheme.colorScheme.secondary)
+                Text("Assignments Done", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        Text("Overview Metrics", style = MaterialTheme.typography.titleLarge)
+        
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard("Total Tasks", "${stats.totalTasks}", Modifier.weight(1f))
+            StatCard("Total Assignments", "${stats.totalAssignments}", Modifier.weight(1f))
+        }
+        
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatCard("Study Time", "${stats.totalStudyMinutes / 60}h ${stats.totalStudyMinutes % 60}m", Modifier.weight(1f))
+            StatCard("Quiz Average", String.format(Locale.US, "%.1f%%", stats.quizAverage), Modifier.weight(1f))
+        }
+
+        StatCard("Overall Attendance", String.format(Locale.US, "%.1f%%", stats.overallAttendance), Modifier.fillMaxWidth())
+    }
+}
+>>>>>>> Stashed changes
