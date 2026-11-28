@@ -7,9 +7,31 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/appInsightsSettings.xml
 .DS_Store
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystores & signing secrets
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+
+# Firebase / Service Account & Environment secrets
+app/google-services.json
+*service-account*.json
+*firebase-adminsdk*.json
+.env
+.env.*
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+# Cloud Functions build artifacts
+Backend/functions/node_modules/
+Backend/functions/lib/

@@ -13,6 +13,10 @@ import com.example.campusflow.CampusFlowApplication
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
+            val container = campusFlowApplication().container
+            AuthViewModel(container.authRepository, container.userRepository)
+        }
+        initializer {
             TaskViewModel(campusFlowApplication().container.taskRepository)
         }
         initializer {
@@ -27,39 +31,23 @@ object AppViewModelProvider {
                 campusFlowApplication().container.subjectRepository
             )
         }
-        // Initializer for QuizViewModel
         initializer {
             QuizViewModel(campusFlowApplication().container.quizRepository)
         }
-<<<<<<< Updated upstream
         initializer {
-            ProfileSettingsViewModel(campusFlowApplication().container.userPreferencesRepository)
-        }
-        initializer {
-            NotesViewModel(
-                campusFlowApplication().container.noteRepository,
-                campusFlowApplication().container.subjectRepository
-            )
+            NoteViewModel(campusFlowApplication().container.noteRepository)
         }
         initializer {
             StudyPlannerViewModel(
                 campusFlowApplication().container.studyPlannerRepository,
                 campusFlowApplication().container.subjectRepository
             )
-=======
-        initializer { NoteViewModel(campusFlowApplication().container.noteRepository) }
-        initializer { StudyPlannerViewModel(campusFlowApplication().container.studyPlannerRepository, campusFlowApplication().container.subjectRepository) }
-        initializer { ProfileViewModel(campusFlowApplication().container.userPreferencesRepository) }
-        initializer { 
-            val container = campusFlowApplication().container
-            StatisticsViewModel(
-                container.taskRepository, 
-                container.assignmentRepository, 
-                container.studyPlannerRepository, 
-                container.quizRepository,
-                container.attendanceRepository
-            ) 
->>>>>>> Stashed changes
+        }
+        initializer {
+            ProfileViewModel(campusFlowApplication().container.userRepository)
+        }
+        initializer {
+            StatisticsViewModel(campusFlowApplication().container.statisticsRepository)
         }
     }
 }

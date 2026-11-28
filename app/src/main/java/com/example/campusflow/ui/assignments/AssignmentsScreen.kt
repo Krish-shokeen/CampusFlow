@@ -35,11 +35,21 @@ fun AssignmentsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val statusFilter by viewModel.statusFilter.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            viewModel.clearError()
+        }
+    }
 
     var assignmentToDelete by remember { mutableStateOf<Assignment?>(null) }
     var showSortMenu by remember { mutableStateOf(false) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = { onNavigateToAssignmentEntry(null) }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Assignment")

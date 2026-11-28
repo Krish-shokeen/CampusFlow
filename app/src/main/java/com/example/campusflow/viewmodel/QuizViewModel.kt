@@ -32,40 +32,42 @@ data class ActiveQuizUiState(
     val state: QuizSessionState = QuizSessionState.IDLE,
     val questions: List<QuizQuestion> = emptyList(),
     val currentQuestionIndex: Int = 0,
-    val userAnswers: Map<Int, String> = emptyMap(), // Question Index -> Option (A, B, C, D)
+    val userAnswers: Map<Int, String> = emptyMap(),
     val timeLeftSeconds: Int = 0,
     val score: Int = 0,
+    val timeTakenSeconds: Int = 0,
     val currentResultId: Int? = null
 )
 
 class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
 
-    // --- HOME DASHBOARD STATE ---
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     val homeUiState: StateFlow<QuizHomeUiState> = combine(
         quizRepository.getQuizCategoriesStream(),
         quizRepository.getAllQuizResultsStream()
     ) { categories, results ->
         val total = results.size
-        val best = results.maxOfOrNull { it.score } ?: 0
-        val avg = if (total > 0) results.map { it.score.toFloat() / it.totalQuestions }.average().toFloat() * 100f else 0f
-        
+        val bestPercent = results.maxOfOrNull { it.percentage.toInt() } ?: 0
+        val avg = if (total > 0) results.map { it.percentage }.average().toFloat() else 0f
+
         QuizHomeUiState(
             categories = categories,
             totalAttempted = total,
-            bestScore = best,
+            bestScore = bestPercent,
             averageScore = avg,
-            recentResults = results.take(10), // Show latest 10
+            recentResults = results.take(10),
             isLoading = false
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), QuizHomeUiState(isLoading = true))
 
-
-    // --- ACTIVE QUIZ SESSION STATE ---
     private val _sessionState = MutableStateFlow(ActiveQuizUiState())
     val sessionState: StateFlow<ActiveQuizUiState> = _sessionState.asStateFlow()
 
     private var timerJob: Job? = null
     private var timePerQuestionConfig: Int = 30
+    private var quizStartMillis: Long = 0L
 
     fun openConfig(category: String) {
         _sessionState.value = ActiveQuizUiState(category = category, state = QuizSessionState.CONFIG)
@@ -74,19 +76,23 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
     fun startQuiz(numQuestions: Int, timePerQuestion: Int) {
         val category = _sessionState.value.category
         timePerQuestionConfig = timePerQuestion
-        
+
         viewModelScope.launch {
-            // Load questions, shuffle them, and take requested amount
             val allQuestions = quizRepository.getQuestionsByCategory(category)
             val selectedQuestions = allQuestions.shuffled().take(numQuestions)
-            
+            if (selectedQuestions.isEmpty()) {
+                _errorMessage.value = "No questions available for $category."
+                return@launch
+            }
+            quizStartMillis = System.currentTimeMillis()
             _sessionState.value = _sessionState.value.copy(
                 state = QuizSessionState.ACTIVE,
                 questions = selectedQuestions,
                 currentQuestionIndex = 0,
                 userAnswers = emptyMap(),
                 timeLeftSeconds = timePerQuestionConfig,
-                score = 0
+                score = 0,
+                timeTakenSeconds = 0
             )
             startTimer()
         }
@@ -101,7 +107,6 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
                     timeLeftSeconds = _sessionState.value.timeLeftSeconds - 1
                 )
             }
-            // Time is up for this question
             handleTimeUp()
         }
     }
@@ -109,7 +114,6 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
     private fun handleTimeUp() {
         val currentIndex = _sessionState.value.currentQuestionIndex
         val totalQuestions = _sessionState.value.questions.size
-        
         if (currentIndex < totalQuestions - 1) {
             nextQuestion()
         } else {
@@ -140,7 +144,7 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
         if (currentIndex > 0) {
             _sessionState.value = _sessionState.value.copy(
                 currentQuestionIndex = currentIndex - 1,
-                timeLeftSeconds = timePerQuestionConfig // Reset timer for consistency when navigating back
+                timeLeftSeconds = timePerQuestionConfig
             )
             startTimer()
         }
@@ -148,28 +152,30 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
 
     fun submitQuiz() {
         timerJob?.cancel()
-        
+
         val questions = _sessionState.value.questions
         val answers = _sessionState.value.userAnswers
-        
-        // Calculate score naturally using Kotlin collections
-        val score = questions.mapIndexed { index, question -> 
-            if (answers[index] == question.correctAnswer) 1 else 0 
-        }.sum()
+        val summary = quizRepository.evaluateQuizAttempt(questions, answers)
+        val elapsedSeconds = if (quizStartMillis > 0L) {
+            ((System.currentTimeMillis() - quizStartMillis) / 1000L).toInt().coerceAtLeast(1)
+        } else 0
 
         val result = QuizResult(
             category = _sessionState.value.category,
-            score = score,
-            totalQuestions = questions.size,
-            completedAt = LocalDateTime.now()
+            score = summary.correctCount,
+            totalQuestions = summary.totalQuestions,
+            completedAt = LocalDateTime.now(),
+            timeTakenSeconds = elapsedSeconds
         )
 
         viewModelScope.launch {
-            quizRepository.insertQuizResult(result)
-            
+            runCatching { quizRepository.insertQuizResult(result) }
+                .onFailure { _errorMessage.value = it.message ?: "Failed to save quiz result." }
+
             _sessionState.value = _sessionState.value.copy(
                 state = QuizSessionState.RESULT,
-                score = score
+                score = summary.correctCount,
+                timeTakenSeconds = elapsedSeconds
             )
         }
     }
@@ -180,7 +186,7 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
             currentQuestionIndex = 0
         )
     }
-    
+
     fun nextReviewQuestion() {
         val currentIndex = _sessionState.value.currentQuestionIndex
         if (currentIndex < _sessionState.value.questions.size - 1) {
@@ -198,6 +204,10 @@ class QuizViewModel(private val quizRepository: QuizRepository) : ViewModel() {
     fun resetSession() {
         timerJob?.cancel()
         _sessionState.value = ActiveQuizUiState()
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     override fun onCleared() {

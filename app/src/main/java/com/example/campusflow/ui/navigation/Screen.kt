@@ -1,9 +1,9 @@
 package com.example.campusflow.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -11,13 +11,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 // Sealed classes are perfect for defining restricted hierarchies.
 // Here we use them for defining possible navigation routes.
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    // Authentication routes
+    object Login : Screen("login", "Login", Icons.Filled.Home)
+    object Register : Screen("register", "Register", Icons.Filled.Home)
+    object ForgotPassword : Screen("forgot_password", "Forgot Password", Icons.Filled.Home)
+
     // Objects are singletons in Kotlin, representing screens without arguments
     object Home : Screen("home", "Home", Icons.Filled.Home)
-    object Tasks : Screen("tasks", "Tasks", Icons.Filled.List)
-    object Assignments : Screen("assignments", "Assignments", Icons.Filled.Assignment)
+    object Tasks : Screen("tasks", "Tasks", Icons.AutoMirrored.Filled.List)
+    object Assignments : Screen("assignments", "Assignments", Icons.AutoMirrored.Filled.Assignment)
     object Quiz : Screen("quiz", "Quiz", Icons.Filled.Quiz)
     object More : Screen("more", "More", Icons.Filled.Menu)
-    
+
     // Additional screens accessed from 'More'
     object Attendance : Screen("attendance", "Attendance", Icons.Filled.Menu)
     object Notes : Screen("notes", "Notes", Icons.Filled.Menu)
@@ -40,18 +45,18 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object SubjectEntry : Screen("subject_entry?subjectId={subjectId}", "Subject Entry", Icons.Filled.Menu) {
         fun createRoute(subjectId: Int? = null) = if (subjectId != null) "subject_entry?subjectId=$subjectId" else "subject_entry?subjectId=-1"
     }
-    
+
     object MarkAttendance : Screen("mark_attendance?recordId={recordId}", "Mark Attendance", Icons.Filled.Menu) {
         fun createRoute(recordId: Int? = null) = if (recordId != null) "mark_attendance?recordId=$recordId" else "mark_attendance?recordId=-1"
     }
 
     object AttendanceHistory : Screen("attendance_history", "Attendance History", Icons.Filled.Menu)
-    
+
     // Dynamic route for Quiz active session
     object QuizSession : Screen("quiz_session/{category}", "Quiz", Icons.Filled.Menu) {
         fun createRoute(category: String) = "quiz_session/$category"
     }
-    
+
     // Notes module routes
     object NoteEntry : Screen("note_entry?noteId={noteId}", "Note Entry", Icons.Filled.Menu) {
         fun createRoute(noteId: Int? = null) = if (noteId != null) "note_entry?noteId=$noteId" else "note_entry?noteId=-1"
@@ -65,5 +70,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     companion object {
         // A list of main screens for the Bottom Navigation Bar
         val bottomNavItems = listOf(Home, Tasks, Assignments, Quiz, More)
+        val authRoutes = setOf(Login.route, Register.route, ForgotPassword.route)
     }
 }

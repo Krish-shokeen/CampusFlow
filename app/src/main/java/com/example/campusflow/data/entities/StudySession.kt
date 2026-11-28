@@ -24,5 +24,8 @@ data class StudySession(
     val subjectId: Int,
     val date: LocalDate,
     val startTime: LocalDateTime,
-    val durationMinutes: Int
+    val durationMinutes: Int,
+    val title: String = "Study Session",
+    val focusMethod: String = "POMODORO",
+    val isCompleted: Boolean = false
 )

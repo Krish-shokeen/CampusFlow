@@ -9,11 +9,11 @@ import com.example.campusflow.data.repository.SubjectRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import kotlin.math.ceil
 
 enum class AttendanceStatus { SAFE, WARNING, LOW }
 
@@ -41,7 +41,7 @@ data class AttendanceRecordDetails(
 
 data class AttendanceUiState(
     val subjectsStats: List<SubjectAttendanceStats> = emptyList(),
-    val overallStats: OverallAttendanceStats = OverallAttendanceStats(0, 0, 0, 100f),
+    val overallStats: OverallAttendanceStats = OverallAttendanceStats(0, 0, 0, 0f),
     val allRecords: List<AttendanceRecordDetails> = emptyList(),
     val subjects: List<Subject> = emptyList(),
     val isLoading: Boolean = false
@@ -52,42 +52,38 @@ class AttendanceViewModel(
     private val subjectRepository: SubjectRepository
 ) : ViewModel() {
 
-    // View state combining database streams
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     val uiState: StateFlow<AttendanceUiState> = combine(
         attendanceRepository.getAllRecordsStream(),
         subjectRepository.getAllSubjectsStream()
     ) { records, subjects ->
-        
         var totalPresent = 0
         var totalAbsent = 0
 
-        // Calculate stats for each subject
         val subjectsStats = subjects.map { subject ->
             val subjectRecords = records.filter { it.subjectId == subject.id }
             val present = subjectRecords.count { it.isPresent }
             val absent = subjectRecords.count { !it.isPresent }
             val total = present + absent
-            val percentage = if (total == 0) 0f else (present.toFloat() / total) * 100f
-            
+            val percentage = AttendanceRepository.calculatePercentage(present, total)
+
             totalPresent += present
             totalAbsent += absent
 
             val status = when {
+                total == 0 -> AttendanceStatus.SAFE
                 percentage >= subject.attendanceThreshold + 5f -> AttendanceStatus.SAFE
                 percentage >= subject.attendanceThreshold -> AttendanceStatus.WARNING
                 else -> AttendanceStatus.LOW
             }
 
-            // Calculate classes needed to reach threshold
-            val thresholdRatio = subject.attendanceThreshold / 100f
-            val classesToReachThreshold = if (percentage < subject.attendanceThreshold && thresholdRatio < 1.0f) {
-                val needed = ceil((thresholdRatio * total - present) / (1 - thresholdRatio)).toInt()
-                if (needed < 0) 0 else needed
-            } else if (percentage < subject.attendanceThreshold && thresholdRatio == 1.0f) {
-                -1 // Impossible to reach 100% if missed any class
-            } else {
-                0
-            }
+            val classesToReachThreshold = AttendanceRepository.calculateClassesToReachThreshold(
+                present = present,
+                total = total,
+                thresholdPercent = subject.attendanceThreshold
+            )
 
             SubjectAttendanceStats(
                 subject = subject,
@@ -98,10 +94,10 @@ class AttendanceViewModel(
                 status = status,
                 classesToReachThreshold = classesToReachThreshold
             )
-        }.sortedBy { it.percentage } // Sort by lowest attendance first
+        }.sortedBy { it.percentage }
 
         val overallTotal = totalPresent + totalAbsent
-        val overallPercentage = if (overallTotal == 0) 0f else (totalPresent.toFloat() / overallTotal) * 100f
+        val overallPercentage = AttendanceRepository.calculatePercentage(totalPresent, overallTotal)
         val overallStats = OverallAttendanceStats(
             present = totalPresent,
             absent = totalAbsent,
@@ -129,42 +125,55 @@ class AttendanceViewModel(
         initialValue = AttendanceUiState(isLoading = true)
     )
 
-    // Form states for Attendance History filtering
     val historySubjectFilter = MutableStateFlow<Int?>(null)
 
     val filteredHistory: StateFlow<List<AttendanceRecordDetails>> = combine(
         uiState, historySubjectFilter
     ) { state, subjectId ->
-        if (subjectId == null) state.allRecords 
+        if (subjectId == null) state.allRecords
         else state.allRecords.filter { it.subject?.id == subjectId }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    fun addSubject(subject: Subject) = viewModelScope.launch {
+        runCatching { subjectRepository.insertSubject(subject) }
+            .onFailure { _errorMessage.value = it.message ?: "Failed to add subject." }
+    }
 
-    // Subject Operations
-    fun addSubject(subject: Subject) = viewModelScope.launch { subjectRepository.insertSubject(subject) }
-    fun updateSubject(subject: Subject) = viewModelScope.launch { subjectRepository.updateSubject(subject) }
-    fun deleteSubject(subject: Subject) = viewModelScope.launch { subjectRepository.deleteSubject(subject) }
+    fun updateSubject(subject: Subject) = viewModelScope.launch {
+        runCatching { subjectRepository.updateSubject(subject) }
+            .onFailure { _errorMessage.value = it.message ?: "Failed to update subject." }
+    }
+
+    fun deleteSubject(subject: Subject) = viewModelScope.launch {
+        runCatching { subjectRepository.deleteSubject(subject) }
+            .onFailure { _errorMessage.value = it.message ?: "Failed to delete subject." }
+    }
+
     suspend fun getSubject(id: Int): Subject? = subjectRepository.getSubjectStream(id)
 
-    // Attendance Record Operations
     fun markAttendance(subjectId: Int, date: LocalDate, isPresent: Boolean) {
         viewModelScope.launch {
-            // Check if record already exists for this date and subject
-            // Note: Since Flow represents UI state, we can quickly search the cached list
-            // or perform a direct DB query. Searching cached list is faster here.
-            val existingRecord = uiState.value.allRecords.find { 
-                it.record.subjectId == subjectId && it.record.date == date 
-            }?.record
-
-            if (existingRecord != null) {
-                attendanceRepository.updateRecord(existingRecord.copy(isPresent = isPresent))
-            } else {
-                attendanceRepository.insertRecord(AttendanceRecord(subjectId = subjectId, date = date, isPresent = isPresent))
+            runCatching {
+                attendanceRepository.markAttendance(subjectId, date, isPresent)
+            }.onFailure {
+                _errorMessage.value = it.message ?: "Failed to mark attendance."
             }
         }
     }
 
-    fun updateRecord(record: AttendanceRecord) = viewModelScope.launch { attendanceRepository.updateRecord(record) }
-    fun deleteRecord(record: AttendanceRecord) = viewModelScope.launch { attendanceRepository.deleteRecord(record) }
+    fun updateRecord(record: AttendanceRecord) = viewModelScope.launch {
+        runCatching { attendanceRepository.updateRecord(record) }
+            .onFailure { _errorMessage.value = it.message ?: "Failed to update attendance." }
+    }
+
+    fun deleteRecord(record: AttendanceRecord) = viewModelScope.launch {
+        runCatching { attendanceRepository.deleteRecord(record) }
+            .onFailure { _errorMessage.value = it.message ?: "Failed to delete attendance record." }
+    }
+
     suspend fun getRecord(id: Int): AttendanceRecord? = attendanceRepository.getRecordStream(id)
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
 }

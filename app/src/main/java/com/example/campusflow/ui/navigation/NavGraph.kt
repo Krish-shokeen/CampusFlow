@@ -7,99 +7,147 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.campusflow.ui.dashboard.DashboardScreen
-import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.example.campusflow.ui.tasks.TaskEntryScreen
-import com.example.campusflow.ui.tasks.TasksScreen
 import com.example.campusflow.ui.assignments.AssignmentEntryScreen
 import com.example.campusflow.ui.assignments.AssignmentsScreen
 import com.example.campusflow.ui.attendance.AttendanceHistoryScreen
 import com.example.campusflow.ui.attendance.AttendanceScreen
+import com.example.campusflow.ui.attendance.MarkAttendanceScreen
+import com.example.campusflow.ui.attendance.SubjectEntryScreen
+import com.example.campusflow.ui.auth.ForgotPasswordScreen
+import com.example.campusflow.ui.auth.LoginScreen
+import com.example.campusflow.ui.auth.RegisterScreen
+import com.example.campusflow.ui.dashboard.DashboardScreen
+import com.example.campusflow.ui.more.MoreScreen
 import com.example.campusflow.ui.notes.NoteEntryScreen
 import com.example.campusflow.ui.notes.NotesScreen
 import com.example.campusflow.ui.planner.PlannerScreen
 import com.example.campusflow.ui.planner.SessionEntryScreen
 import com.example.campusflow.ui.profile.ProfileScreen
 import com.example.campusflow.ui.profile.SettingsScreen
-import com.example.campusflow.ui.statistics.StatisticsScreen
 import com.example.campusflow.ui.quiz.QuizHomeScreen
 import com.example.campusflow.ui.quiz.QuizSessionScreen
-import com.example.campusflow.ui.attendance.MarkAttendanceScreen
-import com.example.campusflow.ui.attendance.SubjectEntryScreen
-import com.example.campusflow.ui.dashboard.DashboardScreen
-import com.example.campusflow.ui.more.MoreScreen
-import com.example.campusflow.ui.notes.NotesScreen
-import com.example.campusflow.ui.planner.StudyPlannerScreen
-import com.example.campusflow.ui.profile.ProfileScreen
-import com.example.campusflow.ui.settings.SettingsScreen
 import com.example.campusflow.ui.statistics.StatisticsScreen
+import com.example.campusflow.ui.tasks.TaskEntryScreen
+import com.example.campusflow.ui.tasks.TasksScreen
+import com.example.campusflow.viewmodel.AppViewModelProvider
+import com.example.campusflow.viewmodel.AuthViewModel
 
 @Composable
 fun CampusFlowNavGraph(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isOnAuthRoute = currentRoute in Screen.authRoutes
+
+    // Central auth gate: prevent unauthenticated access to protected screens
+    LaunchedEffect(isAuthenticated, currentRoute) {
+        if (!isAuthenticated && currentRoute != null && !isOnAuthRoute) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        } else if (isAuthenticated && isOnAuthRoute) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(navController = navController)
+            if (isAuthenticated && !isOnAuthRoute) {
+                BottomNavigationBar(navController = navController)
+            }
         }
     ) { innerPadding ->
-        // NavHost links the NavController to a navigation graph where composable destinations are defined
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = if (isAuthenticated) Screen.Home.route else Screen.Login.route,
             modifier = modifier.padding(innerPadding)
         ) {
-            // Extension function composable() from navigation-compose defines a route
-<<<<<<< Updated upstream
+            // Authentication Flow
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    authViewModel = authViewModel,
+                    onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                    onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+            composable(Screen.Register.route) {
+                RegisterScreen(
+                    authViewModel = authViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+            composable(Screen.ForgotPassword.route) {
+                ForgotPasswordScreen(
+                    authViewModel = authViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Protected Main Screens
             composable(Screen.Home.route) {
-=======
-            composable(Screen.Home.route) { 
->>>>>>> Stashed changes
                 DashboardScreen(
                     onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
                     onNavigateToAssignments = { navController.navigate(Screen.Assignments.route) },
                     onNavigateToAttendance = { navController.navigate(Screen.Attendance.route) },
-<<<<<<< Updated upstream
-                    onNavigateToPlanner = { navController.navigate(Screen.Planner.route) }
-                )
-=======
                     onNavigateToQuizzes = { navController.navigate(Screen.Quiz.route) },
                     onNavigateToPlanner = { navController.navigate(Screen.Planner.route) }
-                ) 
->>>>>>> Stashed changes
+                )
             }
-            composable(Screen.Tasks.route) { 
+            composable(Screen.Tasks.route) {
                 TasksScreen(
                     onNavigateToTaskEntry = { taskId ->
                         navController.navigate(Screen.TaskEntry.createRoute(taskId))
                     }
-                ) 
+                )
             }
-            composable(Screen.Assignments.route) { 
+            composable(Screen.Assignments.route) {
                 AssignmentsScreen(
                     onNavigateToAssignmentEntry = { assignmentId ->
                         navController.navigate(Screen.AssignmentEntry.createRoute(assignmentId))
                     }
-                ) 
+                )
             }
-            composable(Screen.Quiz.route) { 
+            composable(Screen.Quiz.route) {
                 QuizHomeScreen(
                     onNavigateToSession = { category -> navController.navigate(Screen.QuizSession.createRoute(category)) }
-                ) 
+                )
             }
             composable(Screen.More.route) { MoreScreen(navController) }
-            
+
             // Sub-screen for Task Entry (Add/Edit)
             composable(
                 route = Screen.TaskEntry.route,
@@ -111,7 +159,7 @@ fun CampusFlowNavGraph(
                     navigateBack = { navController.popBackStack() }
                 )
             }
-            
+
             // Sub-screen for Assignment Entry (Add/Edit)
             composable(
                 route = Screen.AssignmentEntry.route,
@@ -123,45 +171,53 @@ fun CampusFlowNavGraph(
                     navigateBack = { navController.popBackStack() }
                 )
             }
-            
+
             // Sub-screens for 'More' tab
-            composable(Screen.Attendance.route) { 
+            composable(Screen.Attendance.route) {
                 AttendanceScreen(
                     onNavigateToSubjectEntry = { subjectId -> navController.navigate(Screen.SubjectEntry.createRoute(subjectId)) },
                     onNavigateToMarkAttendance = { navController.navigate(Screen.MarkAttendance.createRoute(null)) },
                     onNavigateToHistory = { navController.navigate(Screen.AttendanceHistory.route) }
-                ) 
+                )
             }
-<<<<<<< Updated upstream
-            composable(Screen.Notes.route) { NotesScreen() }
-            composable(Screen.Planner.route) { StudyPlannerScreen() }
-            composable(Screen.Statistics.route) { StatisticsScreen() }
-            composable(Screen.Profile.route) { ProfileScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
-=======
-            composable(Screen.Notes.route) { 
+            composable(Screen.Notes.route) {
                 NotesScreen(
                     onNavigateToNoteEntry = { noteId -> navController.navigate(Screen.NoteEntry.createRoute(noteId)) }
                 )
             }
-            composable(Screen.Planner.route) { 
+            composable(Screen.Planner.route) {
                 PlannerScreen(
                     onNavigateToSessionEntry = { sessionId -> navController.navigate(Screen.SessionEntry.createRoute(sessionId)) }
                 )
             }
             composable(Screen.Statistics.route) { StatisticsScreen() }
-            composable(Screen.Profile.route) { 
+            composable(Screen.Profile.route) {
                 ProfileScreen(
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onSignOut = {
+                        authViewModel.logout {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 )
             }
-            composable(Screen.Settings.route) { 
+            composable(Screen.Settings.route) {
                 SettingsScreen(
-                    navigateBack = { navController.popBackStack() }
+                    navigateBack = { navController.popBackStack() },
+                    onSignOut = {
+                        authViewModel.logout {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    }
                 )
             }
->>>>>>> Stashed changes
-            
+
             // Dynamic Routes for Attendance Module
             composable(
                 route = Screen.SubjectEntry.route,
@@ -173,7 +229,7 @@ fun CampusFlowNavGraph(
                     navigateBack = { navController.popBackStack() }
                 )
             }
-            
+
             composable(
                 route = Screen.MarkAttendance.route,
                 arguments = listOf(navArgument("recordId") { type = NavType.IntType; defaultValue = -1 })
@@ -191,7 +247,7 @@ fun CampusFlowNavGraph(
                     navigateBack = { navController.popBackStack() }
                 )
             }
-            
+
             composable(
                 route = Screen.QuizSession.route,
                 arguments = listOf(navArgument("category") { type = NavType.StringType })
@@ -202,7 +258,7 @@ fun CampusFlowNavGraph(
                     navigateBack = { navController.popBackStack() }
                 )
             }
-            
+
             composable(
                 route = Screen.NoteEntry.route,
                 arguments = listOf(navArgument("noteId") { type = NavType.IntType; defaultValue = -1 })
@@ -231,29 +287,20 @@ fun CampusFlowNavGraph(
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     NavigationBar {
-        // By using 'by', we delegate property get to the State's value. 
-        // Whenever the back stack changes, this will re-compose.
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        // iterate using forEach (higher order function) or just a simple loop
         Screen.bottomNavItems.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = screen.title) },
                 label = { Text(screen.title) },
-                // Check if the current destination is part of the screen's hierarchy
                 selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                 onClick = {
                     navController.navigate(screen.route) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
                 }

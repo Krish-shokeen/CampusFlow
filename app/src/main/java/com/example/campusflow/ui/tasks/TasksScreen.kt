@@ -1,6 +1,19 @@
 package com.example.campusflow.ui.tasks
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -8,9 +21,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -20,7 +50,6 @@ import com.example.campusflow.data.entities.TaskStatus
 import com.example.campusflow.ui.components.EmptyState
 import com.example.campusflow.ui.components.StatCard
 import com.example.campusflow.viewmodel.AppViewModelProvider
-import com.example.campusflow.viewmodel.TaskSortOption
 import com.example.campusflow.viewmodel.TaskViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,17 +59,24 @@ fun TasksScreen(
     modifier: Modifier = Modifier,
     viewModel: TaskViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    // Collecting StateFlows from ViewModel to drive the UI
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val statusFilter by viewModel.statusFilter.collectAsState()
     val priorityFilter by viewModel.priorityFilter.collectAsState()
-    val sortOption by viewModel.sortOption.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Dialog state for deletion
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage!!)
+            viewModel.clearError()
+        }
+    }
+
     var taskToDelete by remember { mutableStateOf<Task?>(null) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = { onNavigateToTaskEntry(null) }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Task")
@@ -53,21 +89,20 @@ fun TasksScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Header: Stats Row
+            // Stats Row with Animated Content
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // map/count higher order functions
                 val total = uiState.tasks.size
                 val pending = uiState.tasks.count { it.status != TaskStatus.COMPLETED }
                 val completed = uiState.tasks.count { it.status == TaskStatus.COMPLETED }
 
-                StatCard(title = "Total", value = total.toString(), modifier = Modifier.weight(1f))
-                StatCard(title = "Pending", value = pending.toString(), modifier = Modifier.weight(1f))
-                StatCard(title = "Done", value = completed.toString(), modifier = Modifier.weight(1f))
+                AnimatedStatCard(title = "Total", value = total.toString(), modifier = Modifier.weight(1f))
+                AnimatedStatCard(title = "Pending", value = pending.toString(), modifier = Modifier.weight(1f))
+                AnimatedStatCard(title = "Done", value = completed.toString(), modifier = Modifier.weight(1f))
             }
 
             // Search Bar
@@ -83,7 +118,7 @@ fun TasksScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
-            // Filter Chips Row (Horizontal Scroll)
+            // Filter Chips Row
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,7 +133,7 @@ fun TasksScreen(
                         label = { Text("All") }
                     )
                 }
-                items(TaskStatus.values()) { status ->
+                items(TaskStatus.entries.toTypedArray()) { status ->
                     FilterChip(
                         selected = statusFilter == status,
                         onClick = { viewModel.statusFilter.value = status },
@@ -106,9 +141,9 @@ fun TasksScreen(
                     )
                 }
                 
-                item { Divider(modifier = Modifier.width(1.dp).height(32.dp)) }
+                item { HorizontalDivider(modifier = Modifier.width(1.dp).height(32.dp)) }
                 
-                items(Priority.values()) { priority ->
+                items(Priority.entries.toTypedArray()) { priority ->
                     FilterChip(
                         selected = priorityFilter == priority,
                         onClick = {
@@ -119,14 +154,24 @@ fun TasksScreen(
                 }
             }
 
-            // Task List or Empty State
-            if (uiState.tasks.isEmpty()) {
+            // Task List or Empty State with Animated Visibility
+            AnimatedVisibility(
+                visible = uiState.tasks.isEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 EmptyState(
                     title = "No Tasks Found",
                     message = "You don't have any tasks matching this criteria. Add a new task to get started!",
                     icon = Icons.Default.Assignment
                 )
-            } else {
+            }
+
+            AnimatedVisibility(
+                visible = uiState.tasks.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 80.dp),
@@ -134,7 +179,7 @@ fun TasksScreen(
                 ) {
                     items(
                         items = uiState.tasks,
-                        key = { it.id } // Optimizes Recomposition
+                        key = { it.id }
                     ) { task ->
                         TaskCard(
                             task = task,
@@ -147,7 +192,6 @@ fun TasksScreen(
             }
         }
 
-        // Delete Confirmation Dialog
         if (taskToDelete != null) {
             AlertDialog(
                 onDismissRequest = { taskToDelete = null },
@@ -166,5 +210,17 @@ fun TasksScreen(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun AnimatedStatCard(title: String, value: String, modifier: Modifier = Modifier) {
+    AnimatedContent(
+        targetState = value,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "statAnim",
+        modifier = modifier
+    ) { targetVal ->
+        StatCard(title = title, value = targetVal)
     }
 }

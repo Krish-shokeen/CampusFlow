@@ -40,17 +40,29 @@ object QuizData {
         QuizQuestion(0, "DBMS", "What removes all records but keeps the structure?", "DROP", "DELETE", "TRUNCATE", "CLEAR", "C", "TRUNCATE is a fast way to empty a table."),
         QuizQuestion(0, "DBMS", "Which clause is used to filter records after GROUP BY?", "WHERE", "ORDER BY", "HAVING", "FILTER", "C", "HAVING filters aggregated grouped data."),
 
-        // Data Structures Category
-        QuizQuestion(0, "Data Structures", "Which DS uses LIFO?", "Queue", "Stack", "Tree", "Graph", "B", "Stack follows Last-In-First-Out."),
-        QuizQuestion(0, "Data Structures", "Which DS uses FIFO?", "Queue", "Stack", "Tree", "Array", "A", "Queue follows First-In-First-Out."),
-        QuizQuestion(0, "Data Structures", "What is the time complexity of binary search?", "O(1)", "O(n)", "O(log n)", "O(n^2)", "C", "Binary search halves the search space each step."),
-        QuizQuestion(0, "Data Structures", "Which sorting algorithm is fastest on average?", "Bubble Sort", "Insertion Sort", "Selection Sort", "Quick Sort", "D", "Quick Sort has an average case of O(n log n)."),
-        QuizQuestion(0, "Data Structures", "A Tree with maximum 2 children per node is?", "Binary Tree", "B-Tree", "AVL Tree", "Trie", "A", "A Binary Tree allows at most two children."),
-        QuizQuestion(0, "Data Structures", "Which traversal visits Left-Root-Right?", "Pre-order", "In-order", "Post-order", "Level-order", "B", "In-order traversal processes the left child, root, then right child."),
-        QuizQuestion(0, "Data Structures", "What is an AVL tree?", "A balanced binary search tree", "A complete tree", "A graph", "A heap", "A", "AVL trees self-balance their heights."),
-        QuizQuestion(0, "Data Structures", "Which DS represents a network of nodes?", "Array", "Stack", "Graph", "Queue", "C", "Graphs connect vertices via edges."),
-        QuizQuestion(0, "Data Structures", "What data structure does DFS use?", "Queue", "Stack", "Heap", "Hash", "B", "Depth-First Search naturally uses a Stack (or recursion)."),
-        QuizQuestion(0, "Data Structures", "What data structure does BFS use?", "Queue", "Stack", "Heap", "Hash", "A", "Breadth-First Search uses a Queue to explore level by level."),
+        // Data Structures and Algorithms Category
+        QuizQuestion(0, "Data Structures and Algorithms", "Which DS uses LIFO?", "Queue", "Stack", "Tree", "Graph", "B", "Stack follows Last-In-First-Out."),
+        QuizQuestion(0, "Data Structures and Algorithms", "Which DS uses FIFO?", "Queue", "Stack", "Tree", "Array", "A", "Queue follows First-In-First-Out."),
+        QuizQuestion(0, "Data Structures and Algorithms", "What is the time complexity of binary search?", "O(1)", "O(n)", "O(log n)", "O(n^2)", "C", "Binary search halves the search space each step."),
+        QuizQuestion(0, "Data Structures and Algorithms", "Which sorting algorithm is fastest on average?", "Bubble Sort", "Insertion Sort", "Selection Sort", "Quick Sort", "D", "Quick Sort has an average case of O(n log n)."),
+        QuizQuestion(0, "Data Structures and Algorithms", "A Tree with maximum 2 children per node is?", "Binary Tree", "B-Tree", "AVL Tree", "Trie", "A", "A Binary Tree allows at most two children."),
+        QuizQuestion(0, "Data Structures and Algorithms", "Which traversal visits Left-Root-Right?", "Pre-order", "In-order", "Post-order", "Level-order", "B", "In-order traversal processes the left child, root, then right child."),
+        QuizQuestion(0, "Data Structures and Algorithms", "What is an AVL tree?", "A balanced binary search tree", "A complete tree", "A graph", "A heap", "A", "AVL trees self-balance their heights."),
+        QuizQuestion(0, "Data Structures and Algorithms", "Which DS represents a network of nodes?", "Array", "Stack", "Graph", "Queue", "C", "Graphs connect vertices via edges."),
+        QuizQuestion(0, "Data Structures and Algorithms", "What data structure does DFS use?", "Queue", "Stack", "Heap", "Hash", "B", "Depth-First Search naturally uses a Stack (or recursion)."),
+        QuizQuestion(0, "Data Structures and Algorithms", "What data structure does BFS use?", "Queue", "Stack", "Heap", "Hash", "A", "Breadth-First Search uses a Queue to explore level by level."),
+
+        // Operating Systems Category
+        QuizQuestion(0, "Operating Systems", "Which scheduling algorithm can suffer from the convoy effect?", "Round Robin", "FCFS", "SJF", "Priority Scheduling", "B", "First-Come, First-Served (FCFS) causes short processes to wait behind a long CPU-bound process."),
+        QuizQuestion(0, "Operating Systems", "What are the four necessary conditions for deadlock?", "Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait", "Paging, Segmentation, Thrashing, Swapping", "Mutex, Semaphore, Monitor, Barrier", "Fork, Exec, Wait, Exit", "A", "Coffman's four conditions must hold simultaneously for deadlock."),
+        QuizQuestion(0, "Operating Systems", "Which page replacement algorithm suffers from Belady's Anomaly?", "LRU", "Optimal", "FIFO", "LFU", "C", "FIFO can incur more page faults when given more physical frames."),
+        QuizQuestion(0, "Operating Systems", "What is thrashing in virtual memory?", "High disk throughput", "Excessive paging activity reducing CPU utilization", "Kernel panic on boot", "Deadlock between threads", "B", "Thrashing happens when processes spend more time swapping pages than executing."),
+        QuizQuestion(0, "Operating Systems", "Which IPC mechanism is fastest for processes on the same machine?", "Pipes", "Message Queues", "Shared Memory", "Sockets", "C", "Shared memory avoids kernel copying after initial setup."),
+        QuizQuestion(0, "Operating Systems", "What does Peterson's algorithm solve?", "Disk scheduling", "Two-process mutual exclusion", "Page table lookup", "Memory fragmentation", "B", "Peterson's solution ensures mutual exclusion, progress, and bounded waiting for two processes."),
+        QuizQuestion(0, "Operating Systems", "What is a Translation Lookaside Buffer (TLB)?", "A disk cache", "A fast associative cache for page table entries", "A CPU register file", "A thread scheduler queue", "B", "TLB speeds up virtual-to-physical address translation."),
+        QuizQuestion(0, "Operating Systems", "Which state transition happens when a running process requests I/O?", "Running to Ready", "Running to Blocked/Waiting", "Ready to Terminated", "New to Running", "B", "A process blocks while waiting for I/O completion."),
+        QuizQuestion(0, "Operating Systems", "What is internal fragmentation?", "Unused memory inside an allocated block", "Free holes scattered outside partitions", "Corrupted swap space", "Unreferenced files on disk", "A", "Fixed-size partitions or pages can leave unused space inside the allocated region."),
+        QuizQuestion(0, "Operating Systems", "Which system call creates a new process in POSIX/Unix?", "exec()", "fork()", "wait()", "kill()", "B", "fork() duplicates the calling process."),
 
         // General Computer Science
         QuizQuestion(0, "General Computer Science", "What does CPU stand for?", "Central Process Unit", "Central Processing Unit", "Computer Personal Unit", "Central Processor Unit", "B", "Central Processing Unit is the brain of the computer."),

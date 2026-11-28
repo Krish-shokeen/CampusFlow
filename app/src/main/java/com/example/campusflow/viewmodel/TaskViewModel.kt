@@ -9,6 +9,7 @@ import com.example.campusflow.data.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -16,7 +17,6 @@ import java.time.LocalDateTime
 
 enum class TaskSortOption { DUE_DATE, PRIORITY, RECENTLY_CREATED }
 
-// Represents the UI State for the Task List Screen
 data class TasksUiState(
     val tasks: List<Task> = emptyList(),
     val isLoading: Boolean = false
@@ -24,14 +24,14 @@ data class TasksUiState(
 
 class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
 
-    // MutableStateFlows hold the current state of our filters
     val searchQuery = MutableStateFlow("")
-    val statusFilter = MutableStateFlow<TaskStatus?>(null) // null means "All"
+    val statusFilter = MutableStateFlow<TaskStatus?>(null)
     val priorityFilter = MutableStateFlow<Priority?>(null)
     val sortOption = MutableStateFlow(TaskSortOption.DUE_DATE)
 
-    // The combine operator allows us to reactively recalculate the displayed tasks 
-    // whenever the database changes OR any filter changes.
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     val uiState: StateFlow<TasksUiState> = combine(
         taskRepository.getAllTasksStream(),
         searchQuery,
@@ -39,60 +39,52 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
         priorityFilter,
         sortOption
     ) { tasks, query, status, priority, sort ->
-        // Start with all tasks
         var filteredTasks = tasks
-        
-        // 1. Apply Search Filter
+
         if (query.isNotBlank()) {
-            filteredTasks = filteredTasks.filter { it.title.contains(query, ignoreCase = true) }
+            filteredTasks = filteredTasks.filter {
+                it.title.contains(query, ignoreCase = true) ||
+                    it.description.contains(query, ignoreCase = true)
+            }
         }
-        // 2. Apply Status Filter
         if (status != null) {
             filteredTasks = filteredTasks.filter { it.status == status }
         }
-        // 3. Apply Priority Filter
         if (priority != null) {
             filteredTasks = filteredTasks.filter { it.priority == priority }
         }
-        
-        // 4. Apply Sort Option
+
         filteredTasks = when (sort) {
-            TaskSortOption.DUE_DATE -> {
-                // Tasks with no due date go to the end
-                filteredTasks.sortedBy { it.dueDate ?: LocalDateTime.MAX }
-            }
-            TaskSortOption.PRIORITY -> {
-                // Priority enum: LOW=0, MEDIUM=1, HIGH=2. Descending sorts High first.
-                filteredTasks.sortedByDescending { it.priority.ordinal }
-            }
-            TaskSortOption.RECENTLY_CREATED -> {
-                filteredTasks.sortedByDescending { it.createdAt }
-            }
+            TaskSortOption.DUE_DATE -> filteredTasks.sortedBy { it.dueDate ?: LocalDateTime.MAX }
+            TaskSortOption.PRIORITY -> filteredTasks.sortedByDescending { it.priority.ordinal }
+            TaskSortOption.RECENTLY_CREATED -> filteredTasks.sortedByDescending { it.createdAt }
         }
-        
+
         TasksUiState(tasks = filteredTasks, isLoading = false)
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000), // Keep active for 5s after UI unbinds
+        started = SharingStarted.WhileSubscribed(5000),
         initialValue = TasksUiState(isLoading = true)
     )
 
-    // Database Actions (wrapped in coroutines)
     fun addTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.insertTask(task)
+            runCatching { taskRepository.insertTask(task) }
+                .onFailure { _errorMessage.value = it.message ?: "Failed to create task." }
         }
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.updateTask(task)
+            runCatching { taskRepository.updateTask(task) }
+                .onFailure { _errorMessage.value = it.message ?: "Failed to update task." }
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.deleteTask(task)
+            runCatching { taskRepository.deleteTask(task) }
+                .onFailure { _errorMessage.value = it.message ?: "Failed to delete task." }
         }
     }
 
@@ -101,8 +93,9 @@ class TaskViewModel(private val taskRepository: TaskRepository) : ViewModel() {
         updateTask(task.copy(status = newStatus))
     }
 
-    // Helper to get a single task for the Edit Screen
-    suspend fun getTask(id: Int): Task? {
-        return taskRepository.getTaskStream(id)
+    suspend fun getTask(id: Int): Task? = taskRepository.getTaskStream(id)
+
+    fun clearError() {
+        _errorMessage.value = null
     }
 }

@@ -24,5 +24,7 @@ data class Note(
     val title: String,
     val content: String,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    val updatedAt: LocalDateTime = LocalDateTime.now()
+    val updatedAt: LocalDateTime = LocalDateTime.now(),
+    val category: String = "General",
+    val isPinned: Boolean = false
 )
